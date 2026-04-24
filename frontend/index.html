@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASL Sign Language Classifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #0b1120;
+      --surface:   rgba(255,255,255,0.04);
+      --border:    rgba(255,255,255,0.08);
+      --accent:    #38bdf8;
+      --accent2:   #0ea5e9;
+      --text:      #f1f5f9;
+      --muted:     #64748b;
+      --success:   #22c55e;
+      --error:     #f87171;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .logo em { color: var(--accent); font-style: normal; }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .dot.live   { background: var(--success); box-shadow: 0 0 8px #22c55e66; animation: blink 2s infinite; }
+    .dot.error  { background: var(--error); }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Camera ── */
+    .camera-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 75%; /* 4:3 */
+      background: #000;
+    }
+
+    #video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* mirror */
+    }
+
+    .camera-msg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.75);
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 1.5rem;
+      transition: opacity 0.3s;
+    }
+    .camera-msg.hidden { opacity: 0; pointer-events: none; }
+
+    /* ── Prediction ── */
+    .prediction-body {
+      padding: 2rem 1.5rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.75rem;
+    }
+
+    .letter {
+      font-size: clamp(6rem, 14vw, 10rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      transition: color 0.15s ease, transform 0.1s ease;
+      user-select: none;
+    }
+    .letter.empty { color: rgba(56,189,248,0.15); }
+    .letter.pop   { transform: scale(1.08); }
+
+    .confidence-wrap {
+      width: 100%;
+    }
+
+    .confidence-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.5rem;
+    }
+    .confidence-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+    .confidence-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      transition: opacity 0.2s;
+    }
+    .confidence-value.empty { opacity: 0.2; }
+
+    .bar-track {
+      height: 6px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.07);
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      width: 0%;
+      transition: width 0.35s ease;
+    }
+
+    .note {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .err { color: var(--error); font-size: 0.78rem; min-height: 1.1em; text-align: center; }
+
+    /* ── Footer ── */
+    footer {
+      padding: 1rem 2rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: #1e293b;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ASL <em>Classifier</em></div>
+  <div class="status-badge">
+    <div class="dot" id="dot"></div>
+    <span id="statusText">Waiting for camera</span>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <!-- Camera -->
+    <div class="card">
+      <div class="card-header">Camera Feed</div>
+      <div class="camera-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="camera-msg" id="cameraMsg">Requesting camera access…</div>
+      </div>
+    </div>
+
+    <!-- Prediction -->
+    <div class="card">
+      <div class="card-header">Prediction</div>
+      <div class="prediction-body">
+        <div class="letter empty" id="letter">?</div>
+
+        <div class="confidence-wrap">
+          <div class="confidence-row">
+            <span class="confidence-label">Confidence</span>
+            <span class="confidence-value empty" id="confValue">—</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" id="barFill"></div>
+          </div>
+        </div>
+
+        <p class="note">Hold a clear hand sign in front of the camera.<br>J and Z (motion-based) are excluded from the dataset.</p>
+        <div class="err" id="errMsg"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<footer>ASL Sign Language Classifier &mdash; Transfer Learning with CNN</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script>
+  // ── Configuration ────────────────────────────────────────────────────────────
+  const BACKEND_URL = "https://mclem6-sign-language-classifier-app-backend.hf.space";
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const video     = document.getElementById("video");
+  const canvas    = document.getElementById("canvas");
+  const ctx       = canvas.getContext("2d");
+  const letterEl  = document.getElementById("letter");
+  const confValue = document.getElementById("confValue");
+  const barFill   = document.getElementById("barFill");
+  const cameraMsg = document.getElementById("cameraMsg");
+  const dot       = document.getElementById("dot");
+  const statusTxt = document.getElementById("statusText");
+  const errMsg    = document.getElementById("errMsg");
+
+  let isPredicting  = false;
+  let lastPredictTime = 0;
+
+  function setStatus(state, msg) {
+    dot.className = "dot" + (state === "live" ? " live" : state === "error" ? " error" : "");
+    statusTxt.textContent = msg;
+  }
+
+  function popLetter(char) {
+    letterEl.classList.remove("pop");
+    void letterEl.offsetWidth;
+    letterEl.textContent = char;
+    letterEl.classList.remove("empty");
+    letterEl.classList.add("pop");
+  }
+
+  // Returns pixel-space bounding box with 20% padding on each side, clamped to frame.
+  function getBoundingBox(landmarks, W, H) {
+    let x1 = 1, y1 = 1, x2 = 0, y2 = 0;
+    for (const lm of landmarks) {
+      if (lm.x < x1) x1 = lm.x;
+      if (lm.y < y1) y1 = lm.y;
+      if (lm.x > x2) x2 = lm.x;
+      if (lm.y > y2) y2 = lm.y;
+    }
+    const pw = (x2 - x1) * 0.2;
+    const ph = (y2 - y1) * 0.2;
+    x1 = Math.max(0, x1 - pw);
+    y1 = Math.max(0, y1 - ph);
+    x2 = Math.min(1, x2 + pw);
+    y2 = Math.min(1, y2 + ph);
+    return { x: x1 * W, y: y1 * H, w: (x2 - x1) * W, h: (y2 - y1) * H };
+  }
+
+  function onResults(results) {
+    if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+      errMsg.textContent = "No hand detected";
+      setStatus("idle", "No hand detected");
+      return;
+    }
+
+    errMsg.textContent = "";
+
+    const now = Date.now();
+    if (isPredicting || now - lastPredictTime < 500) return;
+    isPredicting    = true;
+    lastPredictTime = now;
+
+    const box = getBoundingBox(results.multiHandLandmarks[0], video.videoWidth, video.videoHeight);
+    canvas.width  = Math.round(box.w);
+    canvas.height = Math.round(box.h);
+    ctx.drawImage(video, box.x, box.y, box.w, box.h, 0, 0, canvas.width, canvas.height);
+    const b64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
+
+    fetch(`${BACKEND_URL}/predict`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ image: b64 }),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(({ letter, confidence }) => {
+        popLetter(letter);
+        const pct = Math.round(confidence * 100);
+        confValue.textContent = `${pct}%`;
+        confValue.classList.remove("empty");
+        barFill.style.width = `${pct}%`;
+        errMsg.textContent = "";
+        setStatus("live", "Live");
+      })
+      .catch(err => {
+        errMsg.textContent = "Cannot reach backend — check the console.";
+        setStatus("error", "Backend error");
+        console.error(err);
+      })
+      .finally(() => { isPredicting = false; });
+  }
+
+  const hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+  });
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5,
+  });
+  hands.onResults(onResults);
+
+  video.addEventListener("loadedmetadata", () => {
+    cameraMsg.classList.add("hidden");
+    setStatus("idle", "Camera ready");
+  }, { once: true });
+
+  const mpCamera = new Camera(video, {
+    onFrame: async () => { await hands.send({ image: video }); },
+    width: 640,
+    height: 480,
+  });
+  mpCamera.start().catch(() => {
+    cameraMsg.textContent = "Camera access denied — allow permissions and refresh.";
+    setStatus("error", "No camera");
+  });
+</script>
+
+</body>
+</html>
