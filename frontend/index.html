@@ -213,9 +213,7 @@
     .err { color: var(--error); font-size: 0.78rem; min-height: 1.1em; text-align: center; }
 
     .page-note {
-      margin-top: 1.5rem;
-      max-width: 960px;
-      width: 100%;
+      padding: 1rem 2rem 1.5rem;
       font-size: 0.78rem;
       color: var(--muted);
       line-height: 1.6;
@@ -270,15 +268,13 @@
             <div class="bar-fill" id="barFill"></div>
           </div>
         </div>
-
-        <div class="err" id="errMsg"></div>
       </div>
     </div>
 
   </div>
-
-  <p class="page-note"><strong>Transfer learning using MobileNetV2.</strong> Trained on greyscale Sign Language MNIST images — part of applied research comparing ResNet50 vs MobileNetV2. Not trained on webcam feed yet so accuracy is very off.</p>
 </main>
+
+<p class="page-note"><strong>Transfer learning using MobileNetV2.</strong> Trained on greyscale Sign Language MNIST images — part of applied research comparing ResNet50 vs MobileNetV2. Not trained on webcam feed yet so accuracy is very off.</p>
 
 <canvas id="canvas" style="display:none"></canvas>
 
