@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASL Sign Language Classifier</title>
+  <title>Sign Language Classifier</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg:        #0b1120;
-      --surface:   rgba(255,255,255,0.04);
-      --border:    rgba(255,255,255,0.08);
-      --accent:    #38bdf8;
-      --accent2:   #0ea5e9;
-      --text:      #f1f5f9;
+      --bg:        #ffffff;
+      --surface:   #f8fafc;
+      --border:    #e2e8f0;
+      --accent:    #0ea5e9;
+      --accent2:   #0284c7;
+      --text:      #0f172a;
       --muted:     #64748b;
       --success:   #22c55e;
-      --error:     #f87171;
+      --error:     #ef4444;
     }
 
     body {
@@ -98,6 +98,7 @@
       border: 1px solid var(--border);
       border-radius: 18px;
       overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
 
     .card-header {
@@ -152,7 +153,7 @@
     }
 
     .letter {
-      font-size: clamp(6rem, 14vw, 10rem);
+      font-size: clamp(3rem, 8vw, 5rem);
       font-weight: 900;
       line-height: 1;
       letter-spacing: -0.04em;
@@ -160,7 +161,7 @@
       transition: color 0.15s ease, transform 0.1s ease;
       user-select: none;
     }
-    .letter.empty { color: rgba(56,189,248,0.15); }
+    .letter.empty { color: rgba(14,165,233,0.2); }
     .letter.pop   { transform: scale(1.08); }
 
     .confidence-wrap {
@@ -191,7 +192,7 @@
     .bar-track {
       height: 6px;
       border-radius: 99px;
-      background: rgba(255,255,255,0.07);
+      background: #e2e8f0;
       overflow: hidden;
     }
     .bar-fill {
@@ -211,13 +212,22 @@
 
     .err { color: var(--error); font-size: 0.78rem; min-height: 1.1em; text-align: center; }
 
+    .video-disclaimer {
+      padding: 0.6rem 1rem;
+      font-size: 0.68rem;
+      color: var(--muted);
+      line-height: 1.5;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
     /* ── Footer ── */
     footer {
       padding: 1rem 2rem;
       text-align: center;
       font-size: 0.72rem;
-      color: #1e293b;
-      border-top: 1px solid rgba(255,255,255,0.04);
+      color: #94a3b8;
+      border-top: 1px solid var(--border);
       flex-shrink: 0;
     }
   </style>
@@ -225,7 +235,7 @@
 <body>
 
 <header>
-  <div class="logo">ASL <em>Classifier</em></div>
+  <div class="logo">Sign Language <em>Classifier</em></div>
   <div class="status-badge">
     <div class="dot" id="dot"></div>
     <span id="statusText">Waiting for camera</span>
@@ -242,6 +252,9 @@
         <video id="video" autoplay playsinline muted></video>
         <div class="camera-msg" id="cameraMsg">Requesting camera access…</div>
       </div>
+      <p class="video-disclaimer">
+        Model trained on greyscale Sign Language MNIST images. Part of applied research comparing ResNet50 vs MobileNetV2 — this demo uses pretrained MobileNetV2 with transfer learning.
+      </p>
     </div>
 
     <!-- Prediction -->
@@ -260,7 +273,7 @@
           </div>
         </div>
 
-        <p class="note">Hold a clear hand sign in front of the camera.<br>J and Z (motion-based) are excluded from the dataset.</p>
+        <p class="note">Transfer learning using MobileNetV2.<br>Not trained on webcam feed yet so accuracy is very off.</p>
         <div class="err" id="errMsg"></div>
       </div>
     </div>
