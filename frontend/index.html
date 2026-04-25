@@ -212,13 +212,14 @@
 
     .err { color: var(--error); font-size: 0.78rem; min-height: 1.1em; text-align: center; }
 
-    .video-disclaimer {
-      padding: 0.6rem 1rem;
-      font-size: 0.68rem;
+    .page-note {
+      margin-top: 1.5rem;
+      max-width: 960px;
+      width: 100%;
+      font-size: 0.78rem;
       color: var(--muted);
-      line-height: 1.5;
-      border-top: 1px solid var(--border);
-      background: var(--surface);
+      line-height: 1.6;
+      text-align: center;
     }
 
     /* ── Footer ── */
@@ -252,9 +253,6 @@
         <video id="video" autoplay playsinline muted></video>
         <div class="camera-msg" id="cameraMsg">Requesting camera access…</div>
       </div>
-      <p class="video-disclaimer">
-        Model trained on greyscale Sign Language MNIST images. Part of applied research comparing ResNet50 vs MobileNetV2 — this demo uses pretrained MobileNetV2 with transfer learning.
-      </p>
     </div>
 
     <!-- Prediction -->
@@ -273,12 +271,13 @@
           </div>
         </div>
 
-        <p class="note">Transfer learning using MobileNetV2.<br>Not trained on webcam feed yet so accuracy is very off.</p>
         <div class="err" id="errMsg"></div>
       </div>
     </div>
 
   </div>
+
+  <p class="page-note"><strong>Transfer learning using MobileNetV2.</strong> Trained on greyscale Sign Language MNIST images — part of applied research comparing ResNet50 vs MobileNetV2. Not trained on webcam feed yet so accuracy is very off.</p>
 </main>
 
 <canvas id="canvas" style="display:none"></canvas>
